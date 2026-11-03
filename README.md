@@ -37,9 +37,7 @@ Aucun mot de passe unique n'est partagé entre les équipes. L'accès est config
 ### Format de configuration dans `.env`
 Indiquez des paires `email:codeSecret` séparées par des virgules :
 
-```env
-AUTHORIZED_USERS=marketing@domaine.com:CodeSecret123,patron@domaine.com:CodeBoss456,achraf@domaine.com:MonCode789
-```
+
 
 ### Fonctionnement de la sécurité
 1. L'utilisateur saisit son email professionnel et son code secret.
