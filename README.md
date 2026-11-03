@@ -101,17 +101,7 @@ L'application utilise le flux officiel d'authentification Shopify **Client Crede
    - `read_products` (lecture du catalogue)
    - `write_products` (mise à jour des prix)
 4. Installez l'application sur votre boutique Shopify.
-5. Dans **Paramètres** de l'application, copiez votre **Client ID** et votre **Client Secret**.
-6. Renseignez dans votre `.env` :
-   ```env
-   SHOPIFY_STORE_DOMAIN=votre-boutique.myshopify.com
-   SHOPIFY_CLIENT_ID=votre_client_id
-   SHOPIFY_CLIENT_SECRET=votre_client_secret
-   SHOPIFY_API_VERSION=2025-01
-   ```
-   *L'application échange automatiquement ces identifiants contre un jeton d'accès temporaire via `POST https://{shop}.myshopify.com/admin/oauth/access_token` et le conserve en mémoire cache avec rafraîchissement automatique.*
 
----
 
 ## 💻 Installation et lancement local
 
@@ -121,7 +111,7 @@ cd promoKEA
 npm install
 ```
 
-### 2. Configurer le fichier `.env`
+
 Copiez le modèle et renseignez vos valeurs :
 ```bash
 cp .env.example .env
