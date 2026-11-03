@@ -1,0 +1,16 @@
+services:
+  promo-switcher:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: shopify-promo-switcher
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    env_file:
+      - .env
+    volumes:
+      # Montage persistant du volume pour conserver state.json, price-backup.json et l'historique
+      - ./data:/app/data
+    environment:
+      - NODE_ENV=production

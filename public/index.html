@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>KEA — Gestion des promotions</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" type="image/png" href="/images/KEA_NOIR_SANS_FOND.png" />
+
+  <!-- Typographie premium -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            display: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+          },
+          boxShadow: {
+            'subtle': '0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.02)',
+            'card': '0 10px 30px -5px rgba(15, 23, 42, 0.05), 0 0 1px 1px rgba(15, 23, 42, 0.04)',
+            'elevated': '0 20px 40px -10px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.04)',
+          }
+        },
+      },
+    };
+  </script>
+
+  <style>
+    [x-cloak], .is-hidden { display: none !important; }
+    body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+
+    /* Transitions lisses */
+    .btn-pill {
+      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .btn-pill[data-selected="true"] {
+      background-color: #0f172a;
+      color: #ffffff;
+      border-color: #0f172a;
+      box-shadow: 0 4px 14px -2px rgba(15, 23, 42, 0.25);
+      transform: translateY(-1px);
+    }
+  </style>
+</head>
+
+<body class="min-h-full bg-[#fbfcfd] text-slate-800 font-sans selection:bg-slate-900 selection:text-white">
+
+  <!-- ===================================================================== -->
+  <!-- 1. ÉCRAN DE CHARGEMENT INITIAL                                        -->
+  <!-- ===================================================================== -->
+  <div id="view-boot" class="fixed inset-0 flex items-center justify-center bg-white z-50">
+    <div class="flex flex-col items-center gap-3">
+      <div class="w-8 h-8 rounded-full border-2 border-slate-200 border-t-slate-900 animate-spin"></div>
+      <span class="text-xs font-medium text-slate-400 tracking-wide">Chargement…</span>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- 2. ÉCRAN DE CONNEXION (ÉPURÉ & SÉCURISÉ)                               -->
+  <!-- ===================================================================== -->
+  <main id="view-login" class="is-hidden min-h-screen flex items-center justify-center p-6 bg-gradient-to-b from-white via-slate-50/50 to-slate-100/50">
+    <div class="w-full max-w-sm">
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center mb-5">
+          <img src="/images/KEA_NOIR_SANS_FOND.png" alt="KEA" class="h-12 w-auto object-contain max-w-[200px]" />
+        </div>
+        <h1 class="font-display text-2xl font-bold tracking-tight text-slate-900">KEA</h1>
+        <p class="text-xs text-slate-500 mt-1.5">Gestion simplifiée des promotions de la boutique</p>
+      </div>
+
+      <div class="bg-white rounded-3xl border border-slate-200/70 p-8 shadow-card">
+        <form id="login-form" class="space-y-4" novalidate>
+          <div>
+            <label for="login-email" class="block text-xs font-semibold text-slate-700 mb-1.5">Adresse email</label>
+            <input id="login-email" type="email" autocomplete="username" required placeholder="nom@entreprise.com"
+              class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition" />
+          </div>
+
+          <div>
+            <label for="login-code" class="block text-xs font-semibold text-slate-700 mb-1.5">Code d'accès secret</label>
+            <input id="login-code" type="password" autocomplete="current-password" required placeholder="••••••••"
+              class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition" />
+          </div>
+
+          <div id="login-error" role="alert" class="is-hidden rounded-xl bg-rose-50 border border-rose-100 p-3 text-xs font-medium text-rose-700">
+            <span id="login-error-text"></span>
+          </div>
+
+          <button id="btn-submit-login" type="submit"
+            class="w-full mt-2 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 active:scale-[0.99] transition">
+            <span id="btn-login-spinner" class="is-hidden w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"></span>
+            <span id="btn-login-text">Se connecter</span>
+          </button>
+        </form>
+      </div>
+
+      <div class="text-center mt-6 space-y-2">
+        <p class="text-[11px] text-slate-400">Accès restreint à l'équipe autorisée.</p>
+        <div class="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-400 group cursor-default">
+          <span>Application développée par</span>
+          <span class="font-semibold text-slate-700 relative inline-flex items-center gap-1 transition-colors duration-300 group-hover:text-slate-900">
+            <span>Achraf</span>
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          </span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- 3. TABLEAU DE BORD PRINCIPAL (DESIGN ÉPURÉ, ZERO SCROLL SUR ORDINATEUR) -->
+  <!-- ===================================================================== -->
+  <div id="view-dashboard" class="is-hidden min-h-screen lg:h-screen lg:max-h-screen lg:overflow-hidden flex flex-col justify-between">
+
+    <!-- En-tête minimalist & compact -->
+    <header class="border-b border-slate-200/60 bg-white/80 backdrop-blur-md shrink-0 z-30">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <img src="/images/KEA_NOIR_SANS_FOND.png" alt="KEA" class="h-7 w-auto object-contain max-w-[110px]" />
+          <div class="border-l border-slate-200/80 pl-3">
+            <h1 class="font-display font-bold text-xs sm:text-sm text-slate-900 leading-tight">KEA</h1>
+            <p id="header-shop-name" class="text-[10px] sm:text-[11px] text-slate-500 leading-tight font-medium"></p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <span id="header-user-email" class="text-xs text-slate-500 font-medium hidden sm:inline-block"></span>
+          <button id="btn-logout" type="button"
+            class="text-xs font-semibold text-slate-600 hover:text-slate-900 px-2.5 py-1 rounded-lg border border-slate-200/80 hover:bg-slate-50 transition">
+            Déconnexion
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Conteneur central en 2 colonnes (s'adapte à 100% de la hauteur de l'écran) -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3 flex flex-col min-h-0 lg:overflow-hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 items-stretch flex-1 min-h-0">
+
+        <!-- ================= COLONNE DE GAUCHE : CONTRÔLE & ACTIONS ================= -->
+        <div class="lg:col-span-5 flex flex-col gap-3 min-h-0 lg:overflow-y-auto pr-0.5">
+          <!-- A. ÉTAT ACTUEL DE LA BOUTIQUE -->
+          <section id="status-card" class="rounded-2xl border p-3 sm:p-3.5 transition-all shrink-0">
+            <!-- Rempli en direct par JS -->
+          </section>
+
+          <!-- B. PROGRESSION D'UNE MISE À JOUR -->
+          <section id="progress-panel" class="is-hidden rounded-2xl bg-white border border-slate-200/80 p-4 shadow-card space-y-2 shrink-0">
+            <div class="flex items-center justify-between text-xs font-semibold text-slate-800">
+              <span id="progress-title" class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-slate-900 animate-ping"></span>
+                <span>Mise à jour en cours…</span>
+              </span>
+              <span id="progress-count" class="text-slate-500 font-mono text-[11px]"></span>
+            </div>
+            <div class="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden">
+              <div id="progress-bar" class="h-full rounded-full bg-slate-900 transition-all duration-300" style="width: 0%"></div>
+            </div>
+            <p id="progress-message" class="text-[11px] text-slate-500 leading-tight"></p>
+          </section>
+
+          <!-- C. FORMULAIRE : APPLIQUER UNE NOUVELLE REMISE -->
+          <section id="panel-start" class="is-hidden bg-white rounded-3xl border border-slate-200/70 p-4 sm:p-5 shadow-card space-y-3.5">
+            <div>
+              <h2 class="font-display text-base font-bold text-slate-900 tracking-tight">Appliquer une remise</h2>
+              <p class="text-[11px] text-slate-500 mt-0.5">Réduction globale avec prix barré sur l'ensemble des articles actifs.</p>
+            </div>
+
+            <!-- Boutons de pourcentage rapides -->
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-700 mb-1.5">Pourcentage de réduction :</label>
+              <div class="grid grid-cols-4 gap-2">
+                <button type="button" data-pct="20" class="btn-pill py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:border-slate-300">-20%</button>
+                <button type="button" data-pct="30" class="btn-pill py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:border-slate-300">-30%</button>
+                <button type="button" data-pct="40" class="btn-pill py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:border-slate-300">-40%</button>
+                <button type="button" data-pct="50" class="btn-pill py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:border-slate-300">-50%</button>
+              </div>
+            </div>
+
+            <!-- Personnalisation libre -->
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-medium text-slate-500">Ou pourcentage libre :</span>
+              <div class="relative w-24">
+                <input id="discount-input" type="number" min="5" max="70" step="1" value="40"
+                  class="w-full text-center rounded-xl border border-slate-200 py-1 px-2.5 text-xs font-bold text-slate-900 focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 transition" />
+                <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] font-bold text-slate-400 pointer-events-none">%</span>
+              </div>
+            </div>
+
+            <!-- Carte d'aperçu du calcul -->
+            <div class="rounded-2xl bg-slate-50/80 border border-slate-100 p-3 text-[11px] text-slate-600 space-y-1">
+              <div class="flex items-center justify-between font-semibold text-slate-900 text-xs">
+                <span>Exemple :</span>
+                <span id="preview-calc" class="font-bold text-slate-900">100 € ➔ 60 €</span>
+              </div>
+              <p id="preview-desc" class="text-slate-500">Un article à 100,00 € sera proposé à 60,00 € avec 100,00 € en prix barré.</p>
+              <p class="text-[10px] text-slate-400 pt-0.5 border-t border-slate-200/40">Sauvegarde automatique de vos prix d'origine.</p>
+            </div>
+
+            <!-- Option discrète de prévisualisation -->
+            <div class="pt-1.5 border-t border-slate-100 flex items-center justify-between">
+              <div>
+                <label for="toggle-preview" class="cursor-pointer text-[11px] font-semibold text-slate-700 select-none block">
+                  Prévisualiser d'abord sans modifier la boutique
+                </label>
+                <p class="text-[10px] text-slate-400">Calcule et affiche vos articles dans la colonne de droite.</p>
+              </div>
+              <input id="toggle-preview" type="checkbox"
+                class="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-0 focus:ring-offset-0 cursor-pointer accent-slate-900" />
+            </div>
+
+            <!-- Bouton d'action principal -->
+            <button id="btn-start" type="button"
+              class="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-white font-bold text-xs tracking-wide shadow-card transition">
+              <span id="btn-start-label">Appliquer -40% sur toute la boutique</span>
+            </button>
+          </section>
+
+          <!-- D. PANNEAU : PROMOTION OU APERÇU EN COURS -->
+          <section id="panel-stop" class="is-hidden bg-white rounded-3xl border border-slate-200/70 p-4 sm:p-5 shadow-card space-y-3.5">
+            <div>
+              <span id="active-badge" class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-200/70 mb-2">
+                Promotion en ligne
+              </span>
+              <h2 id="active-title" class="font-display text-xl font-extrabold text-slate-900 tracking-tight">Remise active</h2>
+              <p id="active-subtitle" class="text-[11px] text-slate-500 mt-0.5"></p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5 text-center">
+              <div class="rounded-xl bg-slate-50/80 p-3 border border-slate-100">
+                <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Articles concernés</span>
+                <span id="active-count" class="text-xl font-display font-bold text-slate-900 mt-0.5 block">0</span>
+              </div>
+              <div class="rounded-xl bg-slate-50/80 p-3 border border-slate-100">
+                <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Réduction</span>
+                <span id="active-pct" class="text-xl font-display font-bold text-slate-900 mt-0.5 block">-0%</span>
+              </div>
+            </div>
+
+            <p class="text-[11px] text-slate-500 bg-slate-50/80 rounded-xl p-3 border border-slate-100 leading-relaxed">
+              Pour mettre fin à l'opération et rétablir automatiquement vos prix d'avant promotion, confirmez ci-dessous.
+            </p>
+
+            <button id="btn-stop" type="button"
+              class="w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 active:scale-[0.99] text-white font-bold text-xs tracking-wide shadow-sm transition">
+              <span id="btn-stop-label">Remettre les prix normaux</span>
+            </button>
+          </section>
+        </div>
+
+        <!-- ================= COLONNE DE DROITE : APERÇU DU CATALOGUE ================= -->
+        <div class="lg:col-span-7 flex flex-col min-h-0 h-full">
+          <!-- E. TABLEAU D'APERÇU (Visible en mode prévisualisation) -->
+          <section id="preview-table-panel" class="is-hidden bg-white rounded-3xl border border-slate-200/80 p-4 sm:p-5 shadow-card flex flex-col flex-1 min-h-0 h-full">
+            <div class="flex items-center justify-between pb-2.5 border-b border-slate-100 shrink-0">
+              <div>
+                <h3 class="font-display font-bold text-xs sm:text-sm text-slate-900 flex items-center gap-2">
+                  <span>Aperçu des articles</span>
+                  <span id="preview-badge-count" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">15 articles</span>
+                </h3>
+                <p class="text-[11px] text-slate-500 mt-0.5">Calcul en temps réel sur votre catalogue Shopify (boutique intacte) :</p>
+              </div>
+              <button id="btn-close-preview" type="button" class="text-[11px] font-semibold text-slate-400 hover:text-slate-700 px-2 py-1 rounded">
+                Fermer
+              </button>
+            </div>
+            
+            <div class="overflow-x-auto overflow-y-auto flex-1 min-h-0 mt-2 pr-1">
+              <table class="w-full text-left text-xs">
+                <thead class="sticky top-0 bg-white border-b border-slate-100 text-slate-400 font-semibold z-10 shadow-[0_1px_0_0_#f1f5f9]">
+                  <tr>
+                    <th class="py-2 font-medium">Article</th>
+                    <th class="py-2 font-medium">Prix d'origine</th>
+                    <th class="py-2 font-medium text-slate-900">Nouveau prix</th>
+                    <th class="py-2 font-medium text-slate-400">Prix barré</th>
+                  </tr>
+                </thead>
+                <tbody id="preview-table-body" class="divide-y divide-slate-100/70 font-medium text-slate-700"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- F. PANNEAU D'ATTENTE (Quand aucun aperçu n'a encore été lancé) -->
+          <section id="preview-placeholder-panel" class="bg-white/60 border border-dashed border-slate-200 rounded-3xl p-6 text-center flex flex-col items-center justify-center flex-1 min-h-[300px] text-slate-400 space-y-2.5 h-full">
+            <div class="w-10 h-10 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center text-lg">
+              🛍️
+            </div>
+            <div class="max-w-xs">
+              <h4 class="font-display font-semibold text-xs sm:text-sm text-slate-700">Aperçu en direct</h4>
+              <p class="text-[11px] text-slate-400 mt-0.5">Cochez « Prévisualiser d'abord » pour vérifier le calcul exact sur vos produits ici avant d'appliquer la promotion.</p>
+            </div>
+          </section>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Footer discret & raffiné toujours visible en bas SANS défilement -->
+    <footer class="py-2.5 text-center border-t border-slate-200/50 shrink-0 bg-white/50 backdrop-blur-sm z-20">
+      <div class="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-400 group cursor-default">
+        <span>Application développée par</span>
+        <span class="font-semibold text-slate-700 relative inline-flex items-center gap-1 transition-colors duration-300 group-hover:text-slate-900">
+          <span>Achraf</span>
+          <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        </span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- 4. MODALE DE CONFIRMATION ÉLÉGANTE                                   -->
+  <!-- ===================================================================== -->
+  <div id="modal" class="is-hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" role="dialog" aria-modal="true">
+    <div class="w-full max-w-sm rounded-3xl bg-white p-6 shadow-elevated space-y-4">
+      <h3 id="modal-title" class="font-display text-base font-bold text-slate-900">Confirmation</h3>
+      <p id="modal-desc" class="text-xs text-slate-600 leading-relaxed"></p>
+      <div class="flex gap-2.5 pt-2">
+        <button id="modal-cancel" type="button"
+          class="flex-1 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition">
+          Annuler
+        </button>
+        <button id="modal-confirm" type="button"
+          class="flex-1 py-2.5 rounded-xl text-xs font-bold text-white transition">
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- 5. NOTIFICATIONS TOAST DISCRÈTES                                      -->
+  <!-- ===================================================================== -->
+  <div id="toasts" class="fixed bottom-5 left-4 right-4 sm:left-auto sm:right-5 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
+
+  <!-- ===================================================================== -->
+  <!-- 6. LOGIQUE JAVASCRIPT LIMPIDE                                         -->
+  <!-- ===================================================================== -->
+  <script>
+    (() => {
+      'use strict';
+
+      const $ = (id) => document.getElementById(id);
+      const show = (el, visible = true) => el.classList.toggle('is-hidden', !visible);
+      const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+      const fmtPct = (n) => Number(n).toLocaleString('fr-FR', { maximumFractionDigits: 0 });
+
+      const state = {
+        user: null,
+        status: null,
+        discount: 40,
+        currency: 'EUR',
+        pollTimer: null,
+        wasBusy: false,
+      };
+
+      function formatMoney(val) {
+        try {
+          return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: state.currency || 'EUR' }).format(val);
+        } catch {
+          return `${Number(val).toFixed(2)} €`;
+        }
+      }
+
+      async function api(path, { method = 'GET', body } = {}) {
+        const opts = {
+          method,
+          credentials: 'same-origin',
+          headers: { Accept: 'application/json', 'X-Requested-With': 'promo-switcher' },
+        };
+        if (method !== 'GET') {
+          opts.headers['Content-Type'] = 'application/json';
+          opts.body = JSON.stringify(body ?? {});
+        }
+        const res = await fetch(path, opts);
+        const data = await res.json().catch(() => null);
+        if (!res.ok) throw new Error(data?.error || `Erreur (${res.status})`);
+        return data;
+      }
+
+      function toast(msg, isError = false) {
+        const el = document.createElement('div');
+        el.className = `pointer-events-auto rounded-xl px-4 py-3 text-xs font-medium shadow-elevated transition-all ${
+          isError ? 'bg-rose-900 text-white' : 'bg-slate-900 text-white'
+        }`;
+        el.textContent = msg;
+        $('toasts').appendChild(el);
+        setTimeout(() => el.remove(), 4500);
+      }
+
+      function showView(name) {
+        show($('view-boot'), name === 'boot');
+        show($('view-login'), name === 'login');
+        show($('view-dashboard'), name === 'dashboard');
+      }
+
+      // Connexion
+      $('login-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = $('login-email').value.trim();
+        const code = $('login-code').value.trim();
+        if (!email || !code) return;
+
+        show($('login-error'), false);
+        $('btn-submit-login').disabled = true;
+        show($('btn-login-spinner'), true);
+
+        try {
+          const res = await api('/api/auth/login', { method: 'POST', body: { email, code } });
+          state.user = res.user;
+          onLoggedIn();
+        } catch (err) {
+          $('login-error-text').textContent = err.message || 'Identifiants invalides.';
+          show($('login-error'), true);
+        } finally {
+          $('btn-submit-login').disabled = false;
+          show($('btn-login-spinner'), false);
+        }
+      });
+
+      $('btn-logout').addEventListener('click', async () => {
+        await api('/api/auth/logout', { method: 'POST' }).catch(() => {});
+        state.user = null;
+        showView('login');
+      });
+
+      function onLoggedIn() {
+        $('header-user-email').textContent = state.user?.email || '';
+        showView('dashboard');
+        refreshStatus();
+        startPolling();
+      }
+
+      function startPolling() {
+        clearTimeout(state.pollTimer);
+        const delay = state.status?.busy ? 1500 : 7000;
+        state.pollTimer = setTimeout(async () => {
+          await refreshStatus();
+          if (state.user) startPolling();
+        }, delay);
+      }
+
+      async function refreshStatus() {
+        try {
+          const s = await api('/api/status');
+          const finished = state.wasBusy && !s.busy;
+          state.status = s;
+          state.wasBusy = s.busy;
+          render(s);
+
+          if (finished && s.state?.lastResult) {
+            const r = s.state.lastResult;
+            toast(r.message, r.status !== 'success');
+            if (r.preview && r.preview.length) renderPreviewTable(r.preview);
+          }
+        } catch (err) {
+          if (err.message.includes('401') || err.message.includes('connecter')) {
+            showView('login');
+          }
+        }
+      }
+
+      function render(s) {
+        const st = s.state;
+        state.currency = s.shop?.currencyCode || 'EUR';
+        const shopTitle = s.shop?.name ? `${s.shop.name} (${state.currency})` : (s.shop?.domain || '');
+        $('header-shop-name').textContent = shopTitle;
+
+        const card = $('status-card');
+        if (st.isPromoActive) {
+          if (st.isDryRun) {
+            card.className = 'rounded-2xl border border-indigo-200 bg-indigo-50/50 p-4 sm:p-5 flex items-center justify-between';
+            card.innerHTML = `
+              <div class="flex items-center gap-3">
+                <span class="w-2.5 h-2.5 rounded-full bg-indigo-600 animate-pulse"></span>
+                <div>
+                  <p class="text-sm font-bold text-indigo-950">Aperçu en cours (-${fmtPct(st.discountPercentage)}%)</p>
+                  <p class="text-xs text-indigo-700/80">Aucun prix n'est modifié sur votre boutique Shopify.</p>
+                </div>
+              </div>
+            `;
+          } else {
+            card.className = 'rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4 sm:p-5 flex items-center justify-between';
+            card.innerHTML = `
+              <div class="flex items-center gap-3">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+                <div>
+                  <p class="text-sm font-bold text-emerald-950">Promotion active (-${fmtPct(st.discountPercentage)}%)</p>
+                  <p class="text-xs text-emerald-800/80">Les prix réduits et prix barrés sont visibles par vos clients.</p>
+                </div>
+              </div>
+            `;
+          }
+        } else {
+          card.className = 'rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 flex items-center justify-between';
+          card.innerHTML = `
+            <div class="flex items-center gap-3">
+              <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+              <div>
+                <p class="text-sm font-bold text-slate-900">Prix normaux actifs</p>
+                <p class="text-xs text-slate-500">Aucune remise globale n'est actuellement appliquée.</p>
+              </div>
+            </div>
+          `;
+        }
+
+        const busy = s.busy;
+        show($('progress-panel'), busy);
+        show($('panel-start'), !busy && !st.isPromoActive);
+        show($('panel-stop'), !busy && st.isPromoActive);
+
+        if (busy && s.operation) {
+          const op = s.operation;
+          $('progress-title').innerHTML = `
+            <span class="w-2 h-2 rounded-full bg-slate-900 animate-ping"></span>
+            <span>${esc(op.message || 'Mise à jour en cours…')}</span>
+          `;
+          if (op.total > 0) {
+            $('progress-bar').style.width = `${Math.round((op.done / op.total) * 100)}%`;
+            $('progress-count').textContent = `${op.done}/${op.total}`;
+          } else {
+            $('progress-bar').style.width = '35%';
+            $('progress-count').textContent = '';
+          }
+        }
+
+        if (st.isPromoActive) {
+          $('active-title').textContent = `Remise de -${fmtPct(st.discountPercentage)}%`;
+          $('active-pct').textContent = `-${fmtPct(st.discountPercentage)}%`;
+          $('active-count').textContent = st.affectedProductsCount || 0;
+          $('active-subtitle').textContent = st.activatedBy ? `Activée par ${st.activatedBy}` : '';
+
+          if (st.isDryRun) {
+            $('active-badge').textContent = 'Aperçu (Boutique intacte)';
+            $('active-badge').className = 'inline-block px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-900 border border-indigo-200/70 mb-3';
+            $('btn-stop').className = 'w-full py-3.5 px-6 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm tracking-wide shadow-sm transition';
+            $('btn-stop-label').textContent = "Terminer l'aperçu";
+            if (st.lastResult?.preview && st.lastResult.preview.length) {
+              renderPreviewTable(st.lastResult.preview);
+            }
+          } else {
+            $('active-badge').textContent = 'En ligne sur la boutique';
+            $('active-badge').className = 'inline-block px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-900 border border-emerald-200/70 mb-3';
+            $('btn-stop').className = 'w-full py-3.5 px-6 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm tracking-wide shadow-sm transition';
+            $('btn-stop-label').textContent = 'Remettre les prix normaux';
+          }
+        } else {
+          // Si aucune promo ni aperçu n'est actif, fermer le tableau
+          show($('preview-table-panel'), false);
+          show($('preview-placeholder-panel'), true);
+        }
+      }
+
+      function updateCalculation() {
+        const pct = Math.min(70, Math.max(5, Number($('discount-input').value) || 40));
+        state.discount = pct;
+
+        document.querySelectorAll('.btn-pill').forEach((b) => {
+          b.setAttribute('data-selected', String(Number(b.dataset.pct) === pct));
+        });
+
+        const isPreview = $('toggle-preview').checked;
+        const newPrice = Math.round(100 * (100 - pct)) / 100;
+        $('preview-calc').textContent = `100 € ➔ ${newPrice} €`;
+        $('preview-desc').textContent = `Un article à 100,00 € sera proposé à ${formatMoney(newPrice)} avec 100,00 € en prix barré.`;
+
+        if (isPreview) {
+          $('btn-start').className = 'w-full py-3.5 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white font-bold text-sm tracking-wide shadow-card transition';
+          $('btn-start-label').textContent = `Prévisualiser la remise de -${pct}%`;
+        } else {
+          $('btn-start').className = 'w-full py-3.5 px-6 rounded-2xl bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-white font-bold text-sm tracking-wide shadow-card transition';
+          $('btn-start-label').textContent = `Appliquer -${pct}% sur toute la boutique`;
+        }
+      }
+
+      function renderPreviewTable(items) {
+        if (!items || !items.length) return;
+        const tbody = $('preview-table-body');
+        tbody.innerHTML = '';
+        items.forEach((item) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="py-2.5 font-semibold text-slate-900 pr-2">${esc(item.productTitle)}</td>
+            <td class="py-2.5 text-slate-500 pr-2">${formatMoney(item.oldPrice)}</td>
+            <td class="py-2.5 font-bold text-slate-900 pr-2">${formatMoney(item.newPrice)}</td>
+            <td class="py-2.5 text-slate-400 line-through">${formatMoney(item.newCompareAtPrice)}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+        show($('preview-table-panel'), true);
+        show($('preview-placeholder-panel'), false);
+      }
+
+      $('btn-close-preview').addEventListener('click', () => {
+        show($('preview-table-panel'), false);
+        show($('preview-placeholder-panel'), true);
+      });
+
+      document.querySelectorAll('.btn-pill').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          $('discount-input').value = btn.dataset.pct;
+          updateCalculation();
+        });
+      });
+      $('discount-input').addEventListener('input', updateCalculation);
+      $('toggle-preview').addEventListener('change', updateCalculation);
+
+      // Start action
+      $('btn-start').addEventListener('click', () => {
+        const isPreview = $('toggle-preview').checked;
+        const pct = state.discount;
+
+        $('modal-title').textContent = isPreview
+          ? `Prévisualiser la remise de -${pct}% ?`
+          : `Appliquer -${pct}% sur toute la boutique ?`;
+
+        $('modal-desc').textContent = isPreview
+          ? "Cette étape calcule les prix sur votre vrai catalogue et affiche un aperçu sans modifier votre boutique."
+          : `Tous les articles actifs vont passer à -${pct}%. Vos prix initiaux sont conservés pour pouvoir être rétablis à tout moment.`;
+
+        const confirmBtn = $('modal-confirm');
+        confirmBtn.className = isPreview
+          ? 'flex-1 py-2.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700'
+          : 'flex-1 py-2.5 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-slate-800';
+        confirmBtn.textContent = isPreview ? 'Voir l\'aperçu' : 'Oui, appliquer';
+
+        confirmBtn.onclick = async () => {
+          show($('modal'), false);
+          try {
+            await api('/api/promo/start', { method: 'POST', body: { discountPercentage: pct, dryRun: isPreview } });
+            refreshStatus();
+          } catch (e) {
+            toast(e.message, true);
+          }
+        };
+
+        show($('modal'), true);
+      });
+
+      // Stop action
+      $('btn-stop').addEventListener('click', () => {
+        const isPreview = state.status?.state?.isDryRun;
+        $('modal-title').textContent = isPreview ? "Fermer l'aperçu ?" : "Rétablir les prix normaux ?";
+        $('modal-desc').textContent = isPreview
+          ? "L'aperçu va être réinitialisé. Aucun prix n'avait été modifié sur Shopify."
+          : "Tous vos articles vont immédiatement retrouver leur tarif d'origine d'avant promotion.";
+
+        const confirmBtn = $('modal-confirm');
+        confirmBtn.className = isPreview
+          ? 'flex-1 py-2.5 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-slate-800'
+          : 'flex-1 py-2.5 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700';
+        confirmBtn.textContent = isPreview ? 'Fermer' : 'Oui, restaurer les prix';
+
+        confirmBtn.onclick = async () => {
+          show($('modal'), false);
+          try {
+            await api('/api/promo/stop', { method: 'POST' });
+            refreshStatus();
+          } catch (e) {
+            toast(e.message, true);
+          }
+        };
+
+        show($('modal'), true);
+      });
+
+      $('modal-cancel').addEventListener('click', () => show($('modal'), false));
+
+      // Démarrage automatique
+      (async () => {
+        updateCalculation();
+        try {
+          const res = await api('/api/auth/me');
+          state.user = res.user;
+          onLoggedIn();
+        } catch {
+          showView('login');
+        }
+      })();
+    })();
+  </script>
+</body>
+</html>
